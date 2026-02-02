@@ -2,8 +2,18 @@ import { io, type Socket } from "socket.io-client";
 import type { ClientToServer, ServerToClient } from "@eightball/shared";
 
 const TOKEN_KEY = "eightball.playerToken";
-const DEFAULT_SERVER_URL = "http://localhost:3001";
 const EVENT = "msg";
+
+function defaultServerUrl(): string {
+  const explicit = import.meta.env.VITE_SERVER_URL as string | undefined;
+  if (explicit) return explicit;
+
+  // Dev: Vite runs on 5173, API on 3001.
+  if (import.meta.env.DEV) return "http://localhost:3001";
+
+  // Prod (Railway): serve client + socket from same origin.
+  return window.location.origin;
+}
 
 function loadToken(): string | null {
   try {
@@ -26,12 +36,13 @@ let socketSingleton: Socket | null = null;
 export function getSocket(): Socket {
   if (socketSingleton) return socketSingleton;
 
-  const serverUrl = (import.meta.env.VITE_SERVER_URL as string | undefined) ?? DEFAULT_SERVER_URL;
+  const serverUrl = defaultServerUrl();
   const token = loadToken();
 
   const s = io(serverUrl, {
     autoConnect: false,
-    transports: ["websocket"],
+    // Allow polling fallback on hosts that restrict websockets.
+    transports: ["websocket", "polling"],
     auth: token ? { token } : {}
   });
 
