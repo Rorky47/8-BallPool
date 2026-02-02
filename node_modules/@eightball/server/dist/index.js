@@ -1,7 +1,10 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import staticPlugin from "@fastify/static";
 import { Server as SocketIOServer } from "socket.io";
 import { randomUUID } from "node:crypto";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { PROTOCOL_VERSION, isClientToServer } from "@eightball/shared";
 import { Matchmaker } from "./matchmaking/matchmaker.js";
 import { GameRoom } from "./rooms/GameRoom.js";
@@ -14,6 +17,21 @@ async function main() {
         origin: true
     });
     app.get("/health", async () => ({ ok: true }));
+    // Serve built React app (Railway: single service).
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const clientDist = path.resolve(__dirname, "../../client/dist");
+    await app.register(staticPlugin, {
+        root: clientDist,
+        prefix: "/"
+    });
+    app.setNotFoundHandler(async (req, reply) => {
+        // Keep API-ish endpoints as 404s.
+        if (req.url.startsWith("/health") || req.url.startsWith("/socket.io")) {
+            return reply.code(404).send({ error: "not_found" });
+        }
+        return reply.sendFile("index.html");
+    });
     const io = new SocketIOServer(app.server, {
         cors: {
             origin: true,
