@@ -3,16 +3,17 @@ import type { ClientToServer, ServerToClient } from "@eightball/shared";
 
 const TOKEN_KEY = "eightball.playerToken";
 const EVENT = "msg";
+const SOCKET_PATH = "/ws";
 
-function defaultServerUrl(): string {
+function defaultServerUrl(): string | undefined {
   const explicit = import.meta.env.VITE_SERVER_URL as string | undefined;
   if (explicit) return explicit;
 
   // Dev: Vite runs on 5173, API on 3001.
   if (import.meta.env.DEV) return "http://localhost:3001";
 
-  // Prod (Railway): serve client + socket from same origin.
-  return window.location.origin;
+  // Prod (Railway): use current origin.
+  return undefined;
 }
 
 function loadToken(): string | null {
@@ -43,6 +44,7 @@ export function getSocket(): Socket {
     autoConnect: false,
     // Allow polling fallback on hosts that restrict websockets.
     transports: ["websocket", "polling"],
+    path: SOCKET_PATH,
     auth: token ? { token } : {}
   });
 

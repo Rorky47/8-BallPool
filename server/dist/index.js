@@ -27,12 +27,13 @@ async function main() {
     });
     app.setNotFoundHandler(async (req, reply) => {
         // Keep API-ish endpoints as 404s.
-        if (req.url.startsWith("/health") || req.url.startsWith("/socket.io")) {
+        if (req.url.startsWith("/health") || req.url.startsWith("/socket.io") || req.url.startsWith("/ws")) {
             return reply.code(404).send({ error: "not_found" });
         }
         return reply.sendFile("index.html");
     });
     const io = new SocketIOServer(app.server, {
+        path: "/ws",
         cors: {
             origin: true,
             methods: ["GET", "POST"]
