@@ -1,0 +1,1 @@
+{"version":3,"file":"params.d.ts","sourceRoot":"","sources":["../../src/physics/params.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,aAAa,GAAG;IAE1B,eAAe,EAAE,MAAM,CAAC;IAExB,eAAe,EAAE,MAAM,CAAC;IAExB,qBAAqB,EAAE,MAAM,CAAC;IAE9B,SAAS,EAAE,MAAM,CAAC;IAElB,WAAW,EAAE,MAAM,CAAC;CACrB,CAAC;AAEF,eAAO,MAAM,sBAAsB,EAAE,aAMpC,CAAC"}
