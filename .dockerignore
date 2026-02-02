@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/build
+**/.vite
+**/.turbo
+**/.cache
+**/.next
+**/.vercel
+**/.DS_Store
+**/*.log
+.git
+.gitignore
+README.md
+*.plan.md
+
