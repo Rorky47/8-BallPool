@@ -63,6 +63,97 @@ function computeView(canvasW: number, canvasH: number, tableW: number, tableH: n
   return { scale, offsetX, offsetY };
 }
 
+function isSolid(id: number): boolean {
+  return id >= 1 && id <= 7;
+}
+
+function isStripe(id: number): boolean {
+  return id >= 9 && id <= 15;
+}
+
+function baseColorFor(id: number): string {
+  // Standard-ish pool colors for readability.
+  const solids: Record<number, string> = {
+    1: "#f1c40f", // yellow
+    2: "#2980b9", // blue
+    3: "#c0392b", // red
+    4: "#8e44ad", // purple
+    5: "#e67e22", // orange
+    6: "#27ae60", // green
+    7: "#7f1d1d" // maroon
+  };
+
+  if (isSolid(id)) return solids[id] ?? "#cccccc";
+  if (isStripe(id)) return solids[id - 8] ?? "#cccccc";
+  if (id === 8) return "#111111";
+  if (id === 0) return "#f5f5f5";
+  return "#cccccc";
+}
+
+function drawBall(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+  id: number
+) {
+  const stroke = "rgba(0,0,0,0.35)";
+  const base = baseColorFor(id);
+
+  // Main sphere
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = id === 0 ? "#f5f5f5" : isStripe(id) ? "#f5f5f5" : base;
+  ctx.fill();
+
+  // Stripe band (9-15)
+  if (isStripe(id)) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = base;
+    const bandH = r * 0.9;
+    ctx.fillRect(x - r, y - bandH / 2, r * 2, bandH);
+    ctx.restore();
+  }
+
+  // Outline
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Cue ball dot for quick ID
+  if (id === 0) {
+    ctx.fillStyle = "#c0392b";
+    ctx.beginPath();
+    ctx.arc(x + r * 0.25, y - r * 0.2, r * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+
+  // Numbers (1-15, including 8)
+  if (id >= 1 && id <= 15) {
+    const badgeR = r * 0.45;
+    ctx.fillStyle = "#f7f7f7";
+    ctx.beginPath();
+    ctx.arc(x, y, badgeR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(0,0,0,0.25)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#111111";
+    ctx.font = `700 ${Math.max(10, Math.floor(r * 0.9))}px system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(id), x, y + 0.5);
+  }
+}
+
 export function GameCanvas(props: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -210,14 +301,7 @@ export function GameCanvas(props: GameCanvasProps) {
         const x = viewNow.offsetX + b.pos.x * viewNow.scale;
         const y = viewNow.offsetY + b.pos.y * viewNow.scale;
         const r = table.ballRadius * viewNow.scale;
-
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = b.id === 0 ? "#f5f5f5" : b.id === 8 ? "#111111" : "#e0b84b";
-        ctx.fill();
-        ctx.strokeStyle = "rgba(0,0,0,0.35)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        drawBall(ctx, x, y, r, b.id);
       }
 
       // Aim guide + simple shot preview

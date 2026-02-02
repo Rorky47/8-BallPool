@@ -271,4 +271,24 @@ export function stepBallsInPlace(
     if (d > 0 && d < target) {
       const push = (target - d) / 2;
       const nn = mul(dp, 1 / d);
-      A.pos = sub(A.p
+      A.pos = sub(A.pos, mul(nn, push));
+      B.pos = add(B.pos, mul(nn, push));
+    }
+  }
+
+  // Clamp tiny velocities
+  let anyMoving = false;
+  for (const b of balls) {
+    if (b.pocketed) continue;
+    const s = len(b.vel);
+    if (s <= params.stopSpeed) {
+      b.vel = { x: 0, y: 0 };
+    } else {
+      anyMoving = true;
+    }
+    clampBallToTable(b, table);
+  }
+
+  return { anyMoving, collided, pocketedAny, events };
+}
+

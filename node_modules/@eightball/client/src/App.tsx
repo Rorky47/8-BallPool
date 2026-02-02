@@ -5,7 +5,7 @@ import { GameCanvas } from "./game/GameCanvas";
 import type { AimState } from "./game/input/controls";
 import { loadKeyBindings, saveKeyBindings, type KeyBindings } from "./game/input/keybindings";
 
-type SnapshotWithReceive = { receivedAtMs: number; snapshot: GameSnapshot };
+type SnapshotWithReceive = { receivedAtMs: number; roomId: string; snapshot: GameSnapshot };
 
 export function App() {
   const [connected, setConnected] = useState(false);
@@ -25,7 +25,12 @@ export function App() {
   const [showKeybinds, setShowKeybinds] = useState(false);
   const [rebinding, setRebinding] = useState<keyof KeyBindings | null>(null);
 
-  const latest = snapshots[snapshots.length - 1]?.snapshot ?? null;
+  const visibleSnapshots = useMemo(() => {
+    if (!roomId) return [];
+    return snapshots.filter((s) => s.roomId === roomId).slice(-2);
+  }, [roomId, snapshots]);
+
+  const latest = visibleSnapshots[visibleSnapshots.length - 1]?.snapshot ?? null;
   const latestState = latest?.state ?? null;
 
   const roomIdRef = useRef<string | null>(null);
@@ -90,7 +95,9 @@ export function App() {
         setPlayerIndex(msg.playerIndex);
         setInQueue(false);
         setQueuePos(null);
-        setSnapshots([]);
+        // Keep any snapshots we might have already received for this room
+        // (server may send snapshot before match/found).
+        setSnapshots((prev) => prev.filter((s) => s.roomId === msg.roomId).slice(-2));
         setLastResult(null);
         return;
       }
@@ -106,13 +113,11 @@ export function App() {
       }
 
       if (msg.t === "game/snapshot") {
-        // Ignore snapshots for other rooms (defensive).
-        const rid = roomIdRef.current;
-        if (rid && msg.roomId !== rid) return;
         const receivedAtMs = performance.now();
         setSnapshots((prev) => {
-          const next = [...prev, { receivedAtMs, snapshot: msg.snapshot }];
-          return next.slice(-2);
+          const next = [...prev, { receivedAtMs, roomId: msg.roomId, snapshot: msg.snapshot }];
+          // Keep only recent snapshots overall (and filtering happens per-room for rendering)
+          return next.slice(-20);
         });
         return;
       }
@@ -356,7 +361,7 @@ export function App() {
               </button>
             </div>
             <GameCanvas
-              snapshots={snapshots}
+              snapshots={visibleSnapshots}
               enabledControls={enabledControls}
               aim={aim}
               onAimChange={onAimChange}

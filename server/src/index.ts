@@ -189,4 +189,12 @@ async function main() {
     });
   });
 
-  
+  await app.listen({ port: PORT, host: HOST });
+  app.log.info(`server listening on http://${HOST}:${PORT}`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
+

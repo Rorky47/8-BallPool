@@ -86,4 +86,29 @@ describe("physics step", () => {
       restitutionRail: 0.85,
       rollingFrictionPerSec: 1,
       stopSpeed: 0,
-      maxSubstep
+      maxSubsteps: 24
+    });
+
+    expect(balls[0]!.vel.x).toBeCloseTo(0.25, 5);
+  });
+
+  it("pockets a ball when reaching a pocket at a rail contact point", () => {
+    const t = table();
+    const balls: BallState[] = [
+      { id: 0, pos: { x: 0.2, y: 0.2 }, vel: { x: -1, y: -1 }, pocketed: false }
+    ];
+
+    stepBallsInPlace(balls, t, 1, {
+      restitutionBall: 0.93,
+      restitutionRail: 0.85,
+      rollingFrictionPerSec: 0,
+      stopSpeed: 0,
+      maxSubsteps: 24
+    });
+
+    expect(balls[0]!.pocketed).toBe(true);
+    expect(balls[0]!.vel.x).toBe(0);
+    expect(balls[0]!.vel.y).toBe(0);
+  });
+});
+
