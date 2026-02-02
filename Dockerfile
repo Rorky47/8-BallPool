@@ -27,6 +27,7 @@ WORKDIR /app
 
 # Only bring what we need to run the server (which serves client/dist)
 COPY --from=build /app/package.json /app/package-lock.json* ./
+COPY --from=build /app/client/package.json ./client/package.json
 COPY --from=build /app/server/package.json ./server/package.json
 COPY --from=build /app/shared/package.json ./shared/package.json
 
